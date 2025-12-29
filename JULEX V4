@@ -1,6 +1,0 @@
--- [[ JULEX V4 - FIX RUN ERROR ]]
-pcall(function()
-    local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-    -- ... (ก๊อปปี้โค้ด V3 ที่ผมเคยให้ไปวางตรงนี้) ...
-    -- อย่าลืมตรวจสอบว่าไม่มีบรรทัดไหนพิมพ์ตกนะเพื่อน
-end)
