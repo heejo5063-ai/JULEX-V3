@@ -1,182 +1,141 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+-- [[ JULEX V3 | MACLIB EDITION ]]
+local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
 
-local Window = Fluent:CreateWindow({
-    Title = "JULEX V3 | SATANIC EDITION",
-    SubTitle = "by heejo5063",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = false, 
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl
+local Window = MacLib:Window({
+    Title = "JULEX V3",
+    Subtitle = "Satanic Ultimate Edition",
+    ConfigName = "JulexConfig",
+    ToggleKey = Enum.KeyCode.LeftControl,
+    BackgroundColor = Color3.fromRGB(20, 20, 20)
 })
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "Combat", Icon = "crosshair" }),
-    Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
-    Misc = Window:AddTab({ Title = "Misc & Satan", Icon = "skull" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
-}
-
-local Options = Fluent.Options
+local MainTab = Window:Tab({ Title = "Combat", Icon = "rbxassetid://10734950309" })
+local VisualTab = Window:Tab({ Title = "Visuals", Icon = "rbxassetid://10734950309" })
+local SatanTab = Window:Tab({ Title = "Satan & Misc", Icon = "rbxassetid://10734950309" })
 
 -- [[ SYSTEM VARIABLES ]]
 local lp = game.Players.LocalPlayer
-local cam = workspace.CurrentCamera
 local rs = game:GetService("RunService")
+local ts = game:GetService("TweenService")
+local cam = workspace.CurrentCamera
+local TargetPlayer = ""
+local SilentAimEnabled = false
+local FOVSize = 150
+local AutoKillEnabled = false
+local SatanEnabled = false
+local ESPEnabled = false
 
--- [ 🎨 UPGRADED FOV: WHITE OUTLINE ]
+-- [ 🎨 FOV SETUP ]
 local fov_circle = Drawing.new("Circle")
-fov_circle.Thickness = 1.5
-fov_circle.NumSides = 100
-fov_circle.Filled = false
-fov_circle.Color = Color3.fromRGB(255, 255, 255)
-fov_circle.Visible = false
+fov_circle.Thickness = 1.5; fov_circle.NumSides = 100; fov_circle.Filled = false; fov_circle.Color = Color3.new(1,1,1); fov_circle.Visible = false
 
--- [ 😈 SATANIC ASSETS ]
+-- [ 😈 SATAN ASSETS ]
 local pentagram = Instance.new("Part")
-pentagram.Size = Vector3.new(8, 0.2, 8); pentagram.CanCollide = false; pentagram.Material = Enum.Material.Neon; pentagram.Color = Color3.fromRGB(255, 0, 150); pentagram.Transparency = 1; pentagram.Parent = workspace
+pentagram.Size = Vector3.new(8, 0.2, 8); pentagram.CanCollide = false; pentagram.Anchored = true; pentagram.Material = "Neon"; pentagram.Color = Color3.fromRGB(255, 0, 150); pentagram.Transparency = 1; pentagram.Parent = workspace
 local decal = Instance.new("Decal", pentagram); decal.Face = "Top"; decal.Texture = "rbxassetid://121430018"; decal.Transparency = 1
-
 local aura = Instance.new("ParticleEmitter")
-aura.Color = ColorSequence.new(Color3.fromRGB(255, 0, 150))
-aura.LightEmission = 1
-aura.Size = NumberSequence.new(0.5, 0)
-aura.Texture = "rbxassetid://243660364"
-aura.Transparency = NumberSequence.new(0.5, 1)
-aura.Lifetime = NumberRange.new(1, 2)
-aura.Rate = 50
-aura.Enabled = false
+aura.Color = ColorSequence.new(Color3.fromRGB(255, 0, 150)); aura.LightEmission = 1; aura.Size = NumberSequence.new(0.6, 0); aura.Texture = "rbxassetid://243660364"; aura.Transparency = NumberSequence.new(0.2, 1); aura.Lifetime = NumberRange.new(0.8); aura.Rate = 50; aura.Enabled = false
 
--- [[ FUNCTION: TARGET FINDER ]]
+-- [[ FUNCTIONS ]]
+local function KillEffect(pos)
+    local orb = Instance.new("Part", workspace)
+    orb.Size = Vector3.new(1,1,1); orb.Shape = "Ball"; orb.Color = Color3.fromRGB(255, 0, 150); orb.Material = "Neon"; orb.Anchored = true; orb.CanCollide = false; orb.Position = pos
+    ts:Create(orb, TweenInfo.new(0.5), {Size = Vector3.new(12,12,12), Transparency = 1}):Play()
+    task.delay(0.6, function() orb:Destroy() end)
+end
+
 local function GetClosest()
-    local target, dist = nil, Options.FOVSize.Value
-    local center = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
+    local target, dist = nil, FOVSize
     for _, v in pairs(game.Players:GetPlayers()) do
         if v ~= lp and v.Character and v.Character:FindFirstChild("Head") and v.Character.Humanoid.Health > 0 then
             local pos, vis = cam:WorldToViewportPoint(v.Character.Head.Position)
             if vis then
-                local mDist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                if mDist < dist then target = v.Character.Head; dist = mDist end
+                local mDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)).Magnitude
+                if mDist < dist then target = v.Character; dist = mDist end
             end
         end
     end
     return target
 end
 
--- [[ TABS SETUP ]]
-Tabs.Main:AddToggle("SilentAim", {Title = "Silent Aim", Default = false})
-Tabs.Main:AddToggle("TPKill", {Title = "TP Kill (วาปไปข้างหลัง)", Default = false})
-Tabs.Main:AddToggle("ShowFOV", {Title = "แสดงวงกลม FOV", Default = true})
-Tabs.Main:AddColorpicker("FOVColor", {Title = "สีของเส้น FOV", Default = Color3.fromRGB(255, 255, 255)})
-Tabs.Main:AddSlider("FOVSize", {Title = "ขนาด FOV", Default = 120, Min = 0, Max = 800, Rounding = 0})
-
-Tabs.Visuals:AddToggle("ESP", {Title = "Highlight ESP (White)", Default = false})
-
-Tabs.Misc:AddToggle("SatanMode", {Title = "Satan Morph (ตัวดำ+ออร่าชมพู)", Default = false})
-Tabs.Misc:AddSlider("Speed", {Title = "Walk Speed", Default = 16, Min = 16, Max = 250, Rounding = 0})
-Tabs.Misc:AddSlider("Jump", {Title = "Jump Power", Default = 50, Min = 50, Max = 400, Rounding = 0})
-
--- [[ ENGINE HOOK ]]
-local mt = getrawmetatable(game); local old = mt.__index; setreadonly(mt, false)
-mt.__index = newcclosure(function(t, k)
-    if Options.SilentAim.Value and t == lp:GetMouse() and (k == "Hit" or k == "Target") then
+-- [[ SILENT AIM V2 ENGINE ]]
+local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}; local method = getnamecallmethod()
+    if SilentAimEnabled and (method == "FindPartOnRayWithIgnoreList" or method == "Raycast") then
         local target = GetClosest()
-        if target then return (k == "Hit" and target.CFrame or target) end
+        if target and target:FindFirstChild("Head") then return target.Head, target.Head.Position, Vector3.new(0,1,0), target.Head.Material end
     end
-    return old(t, k)
+    return oldNamecall(self, ...)
 end)
-setreadonly(mt, true)
+
+-- [[ UI SETUP: COMBAT ]]
+MainTab:Toggle({ Title = "Silent Aim V2", Default = false, Callback = function(v) SilentAimEnabled = v end })
+MainTab:Slider({ Title = "FOV Size", Min = 0, Max = 800, Default = 150, Callback = function(v) FOVSize = v end })
+
+MainTab:Dropdown({
+    Title = "เลือกเป้าหมาย",
+    Multi = false,
+    Items = (function()
+        local p = {}
+        for _, v in pairs(game.Players:GetPlayers()) do if v ~= lp then table.insert(p, v.Name) end end
+        return p
+    end)(),
+    Callback = function(v) TargetPlayer = v end
+})
+
+MainTab:Toggle({ Title = "Auto Kill (วาป+ยิง)", Default = false, Callback = function(v) AutoKillEnabled = v end })
+
+-- [[ UI SETUP: VISUALS ]]
+VisualTab:Toggle({ Title = "White ESP", Default = false, Callback = function(v) ESPEnabled = v end })
+
+-- [[ UI SETUP: SATAN ]]
+SatanTab:Toggle({ Title = "Satan Morph (ตัวดำ+ชมพู)", Default = false, Callback = function(v) SatanEnabled = v end })
+SatanTab:Slider({ Title = "Walk Speed", Min = 16, Max = 250, Default = 16, Callback = function(v) if lp.Character then lp.Character.Humanoid.WalkSpeed = v end end })
 
 -- [[ MAIN LOOP ]]
 rs.RenderStepped:Connect(function()
-    -- FOV Update
-    fov_circle.Visible = Options.ShowFOV.Value
-    fov_circle.Radius = Options.FOVSize.Value
-    fov_circle.Color = Options.FOVColor.Value
-    fov_circle.Position = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
-
+    fov_circle.Visible = SilentAimEnabled; fov_circle.Radius = FOVSize; fov_circle.Position = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
+    
     local char = lp.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
-        -- Satan Mode Logic
-        if Options.SatanMode.Value then
-            pentagram.Transparency = 0.5; decal.Transparency = 0
-            pentagram.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, -2.8, 0) * CFrame.Angles(0, tick() * 2, 0)
-            
-            if not aura.Parent then aura.Parent = char.HumanoidRootPart end
-            aura.Enabled = true
-            
-            for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Color = Color3.new(0, 0, 0)
-                    part.Material = Enum.Material.Neon
-                elseif part:IsA("Clothing") or part:IsA("ShirtGraphic") then
-                    part.Enabled = false
-                end
+        local hrp = char.HumanoidRootPart
+        if SatanEnabled then
+            pentagram.Transparency = 0.5; decal.Transparency = 0; pentagram.CFrame = hrp.CFrame * CFrame.new(0, -2.8, 0) * CFrame.Angles(0, tick()*3, 0)
+            if aura.Parent ~= hrp then aura.Parent = hrp end; aura.Enabled = true
+            for _, v in pairs(char:GetDescendants()) do
+                if v:IsA("BasePart") then v.Color = Color3.new(0,0,0); v.Material = "Neon" 
+                elseif v:IsA("Clothing") then v:Destroy() end
             end
         else
-            pentagram.Transparency = 1; decal.Transparency = 1
-            aura.Enabled = false
+            pentagram.Transparency = 1; decal.Transparency = 1; aura.Enabled = false
         end
-        
-        char.Humanoid.WalkSpeed = Options.Speed.Value
-        char.Humanoid.JumpPower = Options.Jump.Value
-        
-        -- TP Kill Logic
-        if Options.TPKill.Value then
-            local target = GetClosest()
-            if target and target.Parent then
-                char.HumanoidRootPart.CFrame = target.Parent.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+
+        if AutoKillEnabled and TargetPlayer ~= "" then
+            local p = game.Players:FindFirstChild(TargetPlayer)
+            if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character.Humanoid.Health > 0 then
+                hrp.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                hrp.CFrame = CFrame.new(hrp.Position, p.Character.HumanoidRootPart.Position)
+                local tool = lp.Backpack:FindFirstChildOfClass("Tool") or char:FindFirstChildOfClass("Tool")
+                if tool then lp.Character.Humanoid:EquipTool(tool); tool:Activate() end
             end
         end
     end
 
-    -- ESP Logic
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v.Character and v ~= lp then
-            local hl = v.Character:FindFirstChild("JulexESP") or Instance.new("Highlight", v.Character)
-            hl.Name = "JulexESP"; hl.Enabled = Options.ESP.Value; hl.FillColor = Color3.new(1,1,1)
+    if ESPEnabled then
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v.Character and v ~= lp then
+                local hl = v.Character:FindFirstChild("JulexESP") or Instance.new("Highlight", v.Character)
+                hl.Name = "JulexESP"; hl.Enabled = true; hl.FillColor = Color3.new(1,1,1)
+            end
         end
     end
 end)
 
--- Finish Setup
-SaveManager:SetLibrary(Fluent)
-InterfaceManager:SetLibrary(Fluent)
-InterfaceManager:SetFolder("JulexV3")
-SaveManager:SetFolder("JulexV3/configs")
-InterfaceManager:BuildInterfaceSection(Tabs.Settings)
-SaveManager:BuildConfigSection(Tabs.Settings)
-
-Window:SelectTab(1)
-Fluent:Notify({Title = "JULEX V3", Content = "Satanic Ultimate Loaded!", Duration = 5})
--- [[ ปุ่มกด เปิด-ปิด เมนูสำหรับคนหาปุ่มย่อไม่เจอ ]]
-local ToggleButton = Instance.new("ScreenGui")
-local Button = Instance.new("TextButton")
-
-ToggleButton.Name = "ToggleButton"
-ToggleButton.Parent = game.CoreGui
-ToggleButton.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-Button.Parent = ToggleButton
-Button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Button.BorderSizePixel = 0
-Button.Position = UDim2.new(0.1, 0, 0.1, 0) -- ตำแหน่งปุ่มบนจอ
-Button.Size = UDim2.new(0, 50, 0, 50)
-Button.Font = Enum.Font.SourceSansBold
-Button.Text = "JULEX"
-Button.TextColor3 = Color3.fromRGB(255, 0, 150)
-Button.TextSize = 14.0
-Button.Draggable = true -- ลากย้ายตำแหน่งปุ่มได้
-
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = ToolPoint.new(0, 10)
-UICorner.Parent = Button
-
-Button.MouseButton1Click:Connect(function()
-    if game:GetService("CoreGui"):FindFirstChild("Fluent") then
-        local gui = game:GetService("CoreGui").Fluent
-        gui.Enabled = not gui.Enabled
-    end
+-- [[ KILL EFFECT SENSOR ]]
+game.Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function(c)
+        c:WaitForChild("Humanoid").Died:Connect(function() KillEffect(c.HumanoidRootPart.Position) end)
+    end)
 end)
+
+MacLib:Notify({ Title = "JULEX V3", Content = "MacLib Edition Loaded!", Time = 5 })
