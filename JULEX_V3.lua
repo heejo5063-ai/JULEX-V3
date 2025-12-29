@@ -1,17 +1,11 @@
--- เปลี่ยนจากแบบเดิม เป็นแบบนี้ (ลบ Icon ออก)
-local CombatTab = Window:Tab({ Title = "Combat" })
-local VisualTab = Window:Tab({ Title = "Visuals" })
-local SatanTab = Window:Tab({ Title = "Satan & Misc" })
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
     Title = "JULEX V3 | SATANIC ULTIMATE",
     SubTitle = "by heejo5063",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = false, -- ปิดไว้เพื่อกันจอดำ/ค้าง
+    Acrylic = false, -- ปิดไว้เพื่อกันจอดำบนมือถือ
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
@@ -41,7 +35,7 @@ local decal = Instance.new("Decal", pentagram); decal.Face = "Top"; decal.Textur
 local aura = Instance.new("ParticleEmitter")
 aura.Color = ColorSequence.new(Color3.fromRGB(255, 0, 150)); aura.LightEmission = 1; aura.Size = NumberSequence.new(0.6, 0); aura.Texture = "rbxassetid://243660364"; aura.Transparency = NumberSequence.new(0.2, 1); aura.Lifetime = NumberRange.new(0.8); aura.Rate = 50; aura.Enabled = false
 
--- [[ 💥 KILL EFFECT FUNCTION ]]
+-- [[ 💥 KILL EFFECT ]]
 local function KillEffect(pos)
     local orb = Instance.new("Part", workspace)
     orb.Size = Vector3.new(1,1,1); orb.Shape = "Ball"; orb.Color = Color3.fromRGB(255, 0, 150); orb.Material = "Neon"; orb.Anchored = true; orb.CanCollide = false; orb.Position = pos
@@ -73,7 +67,7 @@ local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", function(sel
     return oldNamecall(self, ...)
 end)
 
--- [[ UI TABS SETUP ]]
+-- [[ UI SETUP ]]
 Tabs.Main:AddToggle("SilentAim", {Title = "Silent Aim V2 (ยิงเลี้ยวเข้าหัว)", Default = false})
 Tabs.Main:AddSlider("FOVSize", {Title = "ระยะล็อก (FOV)", Default = 150, Min = 0, Max = 800, Rounding = 0})
 
@@ -88,11 +82,9 @@ task.spawn(function()
 end)
 
 Tabs.Main:AddToggle("AutoKill", {Title = "Auto Kill (วาปถือปืนยิง)", Default = false})
-
-Tabs.Visuals:AddToggle("ESP", {Title = "Highlight ESP สีขาว", Default = false})
-
+Tabs.Visuals:AddToggle("ESP", {Title = "Highlight ESP", Default = false})
 Tabs.Satan:AddToggle("SatanMode", {Title = "Satan Morph (ร่างซาตาน)", Default = false})
-Tabs.Satan:AddSlider("Speed", {Title = "ความเร็วการเดิน", Default = 16, Min = 16, Max = 250, Rounding = 0})
+Tabs.Satan:AddSlider("Speed", {Title = "Speed", Default = 16, Min = 16, Max = 250, Rounding = 0})
 
 -- [[ MAIN LOOP ]]
 rs.RenderStepped:Connect(function()
@@ -102,7 +94,6 @@ rs.RenderStepped:Connect(function()
     local char = lp.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
         local hrp = char.HumanoidRootPart
-        -- Satan Logic
         if Options.SatanMode.Value then
             pentagram.Transparency = 0.5; decal.Transparency = 0; pentagram.CFrame = hrp.CFrame * CFrame.new(0, -2.8, 0) * CFrame.Angles(0, tick()*3, 0)
             if aura.Parent ~= hrp then aura.Parent = hrp end; aura.Enabled = true
@@ -114,7 +105,6 @@ rs.RenderStepped:Connect(function()
             pentagram.Transparency = 1; decal.Transparency = 1; aura.Enabled = false
         end
 
-        -- Auto Kill Logic
         if Options.AutoKill.Value and TargetPlayer ~= "" then
             local p = game.Players:FindFirstChild(TargetPlayer)
             if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character.Humanoid.Health > 0 then
@@ -127,7 +117,6 @@ rs.RenderStepped:Connect(function()
         char.Humanoid.WalkSpeed = Options.Speed.Value
     end
 
-    -- ESP Logic
     if Options.ESP.Value then
         for _, v in pairs(game.Players:GetPlayers()) do
             if v.Character and v ~= lp then
@@ -138,7 +127,7 @@ rs.RenderStepped:Connect(function()
     end
 end)
 
--- [[ KILL EFFECT SENSOR ]]
+-- [[ KILL SENSOR ]]
 game.Players.PlayerAdded:Connect(function(p)
     p.CharacterAdded:Connect(function(c)
         c:WaitForChild("Humanoid").Died:Connect(function() KillEffect(c.HumanoidRootPart.Position) end)
@@ -150,4 +139,4 @@ local ToggleButton = Instance.new("ScreenGui", game.CoreGui); local Button = Ins
 Button.Size = UDim2.new(0, 60, 0, 60); Button.Position = UDim2.new(0, 10, 0.5, 0); Button.Text = "JULEX"; Button.BackgroundColor3 = Color3.new(0,0,0); Button.TextColor3 = Color3.fromRGB(255, 0, 150); Instance.new("UICorner", Button)
 Button.MouseButton1Click:Connect(function() if game:GetService("CoreGui"):FindFirstChild("Fluent") then game:GetService("CoreGui").Fluent.Enabled = not game:GetService("CoreGui").Fluent.Enabled end end)
 
-Fluent:Notify({Title = "JULEX V3", Content = "Fluent Ultimate Loaded! (No Black Screen)", Duration = 5})
+Fluent:Notify({Title = "JULEX V3", Content = "Ultimate V3 Loaded! (Fixed Black Screen)", Duration = 5})
