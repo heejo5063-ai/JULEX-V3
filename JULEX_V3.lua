@@ -1,5 +1,5 @@
--- [[ JULEX V3 | ULTIMATE STABLE EDITION ]]
--- [[ https://raw.githubusercontent.com/heejo5063-ai/JULEX-V3/refs/heads/main/JULEX_V3.lua ]]
+-- [[ JULEX V3 | SATANIC ULTIMATE EDITION ]]
+-- [[ GitHub: https://raw.githubusercontent.com/heejo5063-ai/JULEX-V3/refs/heads/main/JULEX_V3.lua ]]
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
@@ -8,7 +8,7 @@ local Window = Fluent:CreateWindow({
     SubTitle = "by heejo5063",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = false, -- ปิดไว้เพื่อแก้ปัญหาจอดำ (Black Screen Fix)
+    Acrylic = false, -- บังคับปิดเพื่อแก้ปัญหาจอดำบนมือถือ
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
@@ -46,7 +46,7 @@ local function KillEffect(pos)
     task.delay(0.6, function() orb:Destroy() end)
 end
 
--- [[ 🎯 SILENT AIM V2 ENGINE (ยิงเลี้ยว 100%) ]]
+-- [[ 🎯 SILENT AIM V2 ENGINE ]]
 local function GetClosest()
     local target, dist = nil, (Options.FOVSize and Options.FOVSize.Value or 150)
     for _, v in pairs(game.Players:GetPlayers()) do
@@ -84,10 +84,10 @@ task.spawn(function()
     end
 end)
 
-Tabs.Main:AddToggle("AutoKill", {Title = "Auto Kill (วาป+ถือปืน+ยิง)", Default = false})
-Tabs.Visuals:AddToggle("ESP", {Title = "Highlight ESP สีขาว", Default = false})
-Tabs.Satan:AddToggle("SatanMode", {Title = "Satan Morph (ร่างซาตาน)", Default = false})
-Tabs.Satan:AddSlider("Speed", {Title = "ความเร็วการเดิน", Default = 16, Min = 16, Max = 250, Rounding = 0})
+Tabs.Main:AddToggle("AutoKill", {Title = "Auto Kill (วาปฆ่าออโต้)", Default = false})
+Tabs.Visuals:AddToggle("ESP", {Title = "Highlight ESP", Default = false})
+Tabs.Satan:AddToggle("SatanMode", {Title = "Satan Morph (ร่างดำออร่าชมพู)", Default = false})
+Tabs.Satan:AddSlider("Speed", {Title = "Speed", Default = 16, Min = 16, Max = 250, Rounding = 0})
 
 -- [[ MAIN LOOP ]]
 rs.RenderStepped:Connect(function()
@@ -102,7 +102,7 @@ rs.RenderStepped:Connect(function()
             if aura.Parent ~= hrp then aura.Parent = hrp end; aura.Enabled = true
             for _, v in pairs(char:GetDescendants()) do
                 if v:IsA("BasePart") then v.Color = Color3.new(0,0,0); v.Material = "Neon" 
-                elseif v:IsA("Clothing") then v:Destroy() end
+                elseif v:IsA("Clothing") or v:IsA("ShirtGraphic") then v:Destroy() end
             end
         else
             pentagram.Transparency = 1; decal.Transparency = 1; aura.Enabled = false
@@ -142,4 +142,4 @@ local ToggleButton = Instance.new("ScreenGui", game.CoreGui); local Button = Ins
 Button.Size = UDim2.new(0, 60, 0, 60); Button.Position = UDim2.new(0, 10, 0.5, 0); Button.Text = "JULEX"; Button.BackgroundColor3 = Color3.new(0,0,0); Button.TextColor3 = Color3.fromRGB(255, 0, 150); Instance.new("UICorner", Button)
 Button.MouseButton1Click:Connect(function() if game:GetService("CoreGui"):FindFirstChild("Fluent") then game:GetService("CoreGui").Fluent.Enabled = not game:GetService("CoreGui").Fluent.Enabled end end)
 
-Fluent:Notify({Title = "JULEX V3", Content = "Ultimate Stable Loaded! (No Black Screen)", Duration = 5})
+Fluent:Notify({Title = "JULEX V3", Content = "Script Updated & Ready!", Duration = 5})
