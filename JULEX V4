@@ -1,0 +1,20 @@
+-- [[ ฟังก์ชันเปลี่ยนร่างเป็นซาตานตัวดำ ]]
+local function ApplySatanMorph(enabled)
+    local char = lp.Character
+    if not char then return end
+    
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            if enabled then
+                -- เก็บค่าเดิมไว้ก่อนเปลี่ยน (ถ้าจะเอาแบบละเอียด)
+                part.Color = Color3.new(0, 0, 0) -- เปลี่ยนเป็นดำสนิท
+                part.Material = Enum.Material.Neon -- ทำให้ดูขลังขึ้น
+            else
+                part.Material = Enum.Material.Plastic -- กลับเป็นปกติ
+                -- (หมายเหตุ: ถ้าจะให้สีกลับมาเหมือนเดิม 100% ต้องมีการเก็บค่าสีเดิมไว้ครับ)
+            end
+        elseif part:IsA("CharacterMesh") or part:IsA("Clothing") or part:IsA("ShirtGraphic") then
+            part.Enabled = not enabled -- ซ่อนเสื้อผ้าเมื่อเป็นซาตาน
+        end
+    end
+end
