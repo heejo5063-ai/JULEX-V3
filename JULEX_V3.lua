@@ -151,3 +151,32 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 
 Window:SelectTab(1)
 Fluent:Notify({Title = "JULEX V3", Content = "Satanic Ultimate Loaded!", Duration = 5})
+-- [[ ปุ่มกด เปิด-ปิด เมนูสำหรับคนหาปุ่มย่อไม่เจอ ]]
+local ToggleButton = Instance.new("ScreenGui")
+local Button = Instance.new("TextButton")
+
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = game.CoreGui
+ToggleButton.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+Button.Parent = ToggleButton
+Button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Button.BorderSizePixel = 0
+Button.Position = UDim2.new(0.1, 0, 0.1, 0) -- ตำแหน่งปุ่มบนจอ
+Button.Size = UDim2.new(0, 50, 0, 50)
+Button.Font = Enum.Font.SourceSansBold
+Button.Text = "JULEX"
+Button.TextColor3 = Color3.fromRGB(255, 0, 150)
+Button.TextSize = 14.0
+Button.Draggable = true -- ลากย้ายตำแหน่งปุ่มได้
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = ToolPoint.new(0, 10)
+UICorner.Parent = Button
+
+Button.MouseButton1Click:Connect(function()
+    if game:GetService("CoreGui"):FindFirstChild("Fluent") then
+        local gui = game:GetService("CoreGui").Fluent
+        gui.Enabled = not gui.Enabled
+    end
+end)
