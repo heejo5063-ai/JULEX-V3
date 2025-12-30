@@ -1,5 +1,5 @@
 -- [[ JULEX V3 SUPREME - DA HILLS OFFICIAL ]]
--- Status: Stable for Delta | 24H Key System
+-- FIXED: BULLET TRACKING (กระสุนตรงตามเส้น)
 -- Key: BOOK
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
@@ -40,7 +40,7 @@ end
 -- [ 🛡️ UI SYSTEM ]
 local Window = Fluent:CreateWindow({
     Title = "JULEX V3 [ DA HILLS ]",
-    SubTitle = "Supreme Edition",
+    SubTitle = "Fixed Bullet Tracking",
     TabWidth = 160, Size = UDim2.fromOffset(580, 460),
     Acrylic = false,
     Theme = "Dark"
@@ -50,62 +50,66 @@ local KeyTab = Window:AddTab({ Title = "Authentication", Icon = "key" })
 local CombatTab = Window:AddTab({ Title = "Combat", Icon = "target" })
 local MoveTab = Window:AddTab({ Title = "Movement", Icon = "zap" })
 
--- [ 🔑 24H KEY SYSTEM LOGIC ]
-KeyTab:AddParagraph({
-    Title = "Key Status: Unverified",
-    Content = "รหัสผ่านมีอายุการใช้งาน 24 ชั่วโมง\nรับรหัสล่าสุดได้ใน Discord เท่านั้น"
-})
-
+-- [ 🔑 KEY SYSTEM ]
 KeyTab:AddInput("KeyInput", {
-    Title = "ใส่รหัสผ่านเพื่อปลดล็อก",
+    Title = "ใส่รหัสผ่านเพื่อเริ่มใช้งาน",
     Placeholder = "Password...",
     Callback = function(Value)
         if Value:upper() == "BOOK" then
-            Fluent:Notify({ Title = "Access Granted", Content = "ปลดล็อกฟีเจอร์ 24 ชม. สำเร็จ!", Duration = 5 })
-            
-            -- ปลดล็อก Combat
-            CombatTab:AddToggle("Silent", {Title = "Enable Silent Aim (1s Lead)", Default = false}):OnChanged(function(v) _G.Julex.Silent = v end)
-            CombatTab:AddToggle("ShowFOV", {Title = "Show FOV (Center)", Default = false}):OnChanged(function(v) _G.Julex.ShowFOV = v end)
-            CombatTab:AddToggle("ShowLine", {Title = "Show Tracer Line", Default = false}):OnChanged(function(v) _G.Julex.ShowLine = v end)
+            Fluent:Notify({ Title = "Success", Content = "ปลดล็อกฟีเจอร์สำเร็จ!", Duration = 5 })
+            CombatTab:AddToggle("Silent", {Title = "Enable Silent Aim", Default = false}):OnChanged(function(v) _G.Julex.Silent = v end)
+            CombatTab:AddToggle("ShowFOV", {Title = "Show FOV", Default = false}):OnChanged(function(v) _G.Julex.ShowFOV = v end)
+            CombatTab:AddToggle("ShowLine", {Title = "Show Line", Default = false}):OnChanged(function(v) _G.Julex.ShowLine = v end)
             CombatTab:AddSlider("FOVSize", {Title = "FOV Size", Default = 150, Min = 50, Max = 800, Callback = function(v) _G.Julex.FOV = v end})
-            
-            -- ปลดล็อก Movement
             MoveTab:AddSlider("Speed", {Title = "WalkSpeed", Default = 16, Min = 16, Max = 350, Callback = function(v) _G.Julex.Spd = v end})
             MoveTab:AddSlider("Jump", {Title = "JumpPower", Default = 50, Min = 50, Max = 500, Callback = function(v) _G.Julex.Jmp = v end})
             MoveTab:AddToggle("Fly", {Title = "ลอยตัว 100 เมตร", Default = false}):OnChanged(function(v) _G.Julex.Fly = v end)
-            MoveTab:AddToggle("ESP", {Title = "ESP Highlight", Default = false}):OnChanged(function(v) _G.Julex.ESP = v end)
-
+            MoveTab:AddToggle("ESP", {Title = "ESP", Default = false}):OnChanged(function(v) _G.Julex.ESP = v end)
             Window:SelectTab(2)
         end
     end
 })
 
-KeyTab:AddButton({
-    Title = "Copy Discord Link",
-    Callback = function() setclipboard("https://discord.gg/julex") end
-})
+-- [ 🛠️ ENGINE CORE: FIXED BULLET ]
+local mt = getrawmetatable(game)
+local oldIndex = mt.__index
+local oldNamecall = mt.__namecall
+setreadonly(mt, false)
 
--- [ 🛠️ ENGINE CORE ]
+-- Hook __index เพื่อแก้ให้กระสุนวิ่งไปหาเป้าหมายจริงๆ
+mt.__index = newcclosure(function(t, k)
+    if _G.Julex.Silent and t == mouse and (k == "Hit" or k == "Target") then
+        local target = GetTarget()
+        if target then
+            local predPos = target.Character.Head.CFrame + (target.Character.Head.Velocity * _G.Julex.Pred)
+            return (k == "Hit" and predPos or target.Character.Head)
+        end
+    end
+    return oldIndex(t, k)
+end)
+
+-- Hook __namecall สำหรับระบบ Remote ในแมพ Da Hills
+mt.__namecall = newcclosure(function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+    if _G.Julex.Silent and method == "FireServer" and tostring(self) == "MainEvent" then
+        if args[1] == "UpdateMousePos" or args[1] == "MOUSE" then
+            local target = GetTarget()
+            if target then
+                args[2] = target.Character.Head.Position + (target.Character.Head.Velocity * _G.Julex.Pred)
+                return oldNamecall(self, unpack(args))
+            end
+        end
+    end
+    return oldNamecall(self, ...)
+end)
+setreadonly(mt, true)
+
+-- [ 👁️ VISUALS LOOP ]
 local fovCircle = Drawing.new("Circle")
 fovCircle.Thickness = 1.5; fovCircle.Color = Color3.fromRGB(255, 0, 150); fovCircle.Transparency = 1; fovCircle.Filled = false
 local tracerLine = Drawing.new("Line")
 tracerLine.Thickness = 2; tracerLine.Color = Color3.fromRGB(255, 0, 150); tracerLine.Transparency = 1
-
-local mt = getrawmetatable(game); setreadonly(mt, false); local old = mt.__namecall
-mt.__namecall = newcclosure(function(self, ...)
-    local args = {...}
-    if (_G.Julex.Silent) and getnamecallmethod() == "FireServer" and tostring(self) == "MainEvent" then
-        if args[1] == "UpdateMousePos" then
-            local t = GetTarget()
-            if t then 
-                args[2] = t.Character.Head.Position + (t.Character.Head.Velocity * _G.Julex.Pred)
-                return old(self, unpack(args)) 
-            end
-        end
-    end
-    return old(self, ...)
-end)
-setreadonly(mt, true)
 
 rs.Heartbeat:Connect(function()
     fovCircle.Visible = _G.Julex.ShowFOV
