@@ -1,11 +1,11 @@
--- [[ JULEX: FRIEND EDITION ]]
--- [ PC UI STYLE | PERMANENT ORBIT | KEY: BOOK ]
+-- [[ JULEX V1 | FRIEND EDITION ]]
+-- [ PC SILENT AIM | HEAD LOCK | ESP & PHYSICS | KEY: BOOK ]
 
-local AUTH_KEY = "BOOK"
-local INPUT_KEY = "BOOK" -- เพื่อนใส่ BOOK เพื่อเข้าใช้งาน
+local KEY_AUTH = "BOOK"
+local INPUT_KEY = "BOOK"
 
-if INPUT_KEY ~= AUTH_KEY then
-    game.Players.LocalPlayer:Kick("JULEX: Key Incorrect!")
+if INPUT_KEY ~= KEY_AUTH then
+    game.Players.LocalPlayer:Kick("JULEX: Access Denied!")
     return
 end
 
@@ -13,8 +13,8 @@ local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 
 local Window = Library:CreateWindow({
-    Title = "JULEX | FRIEND EDITION",
-    Footer = "PC Style UI | Key: BOOK",
+    Title = "JULEX V1 | FRIEND EDITION",
+    Footer = "PC Style Silent Aim | Key: BOOK",
     NotifySide = "Right",
 })
 
@@ -23,81 +23,62 @@ local lp = game.Players.LocalPlayer
 local runService = game:GetService("RunService")
 local cam = workspace.CurrentCamera
 local mouse = lp:GetMouse()
-local orbitTarget = nil
-local orbitAngle = 0
+local targetPlayer = nil
 
 -- [[ 📑 TABS ]]
 local Tabs = {
-    Combat = Window:AddTab("Combat (PC Style)", "crosshair"),
-    Orbit = Window:AddTab("Orbit Control", "refresh-cw"),
-    Visuals = Window:AddTab("Visuals & ESP", "eye"),
-    Settings = Window:AddTab("Movement & Misc", "settings"),
+    Combat = Window:AddTab("Combat & Aim", "crosshair"),
+    Movement = Window:AddTab("Physics", "zap"),
+    Visuals = Window:AddTab("Visuals", "eye"),
 }
 
--- [[ 🥊 1. COMBAT (Silent Aim + FOV + Lines) ]]
-local AimBox = Tabs.Combat:AddLeftGroupbox("Silent Aim System")
+-- [[ 🥊 1. PC SILENT AIM (หัวคมๆ) ]]
+local AimBox = Tabs.Combat:AddLeftGroupbox("PC Silent Aim")
 AimBox:AddToggle("SilentAim", { Text = "Enable Silent Aim", Default = true })
-AimBox:AddToggle("ShowFOV", { Text = "Show FOV Circle", Default = true })
-AimBox:AddSlider("FOVSize", { Text = "FOV Radius", Default = 150, Min = 10, Max = 800 })
-AimBox:AddToggle("ShowLines", { Text = "Show Snaplines", Default = true })
+AimBox:AddToggle("LockHead", { Text = "Always Lock Head (ล็อคหัว)", Default = true })
+AimBox:AddSlider("Smoothness", { Text = "Smoothness", Default = 3, Min = 1, Max = 50 })
 
-local AssistBox = Tabs.Combat:AddRightGroupbox("Crosshair Settings")
-AssistBox:AddToggle("ShowSpinX", { Text = "Spinning X (White)", Default = true })
-AssistBox:AddSlider("SpinSpeed", { Text = "Spin Speed", Default = 10, Min = 1, Max = 50 })
+local FovBox = Tabs.Combat:AddRightGroupbox("FOV & Lines")
+FovBox:AddToggle("ShowFOV", { Text = "Show FOV Circle", Default = true })
+FovBox:AddSlider("FOVSize", { Text = "FOV Radius", Default = 120, Min = 10, Max = 800 })
+FovBox:AddToggle("ShowLines", { Text = "Snaplines (เส้นล็อค)", Default = true })
 
--- [[ 🔄 2. ORBIT CONTROL (บินจนกว่าจะสั่งหยุด) ]]
-local OrbitBox = Tabs.Orbit:AddLeftGroupbox("Advanced Orbit")
-OrbitBox:AddInput("OrbitInput", {
-    Text = "ชื่อย่อเป้าหมาย",
-    Callback = function(Value)
-        for _, v in pairs(game.Players:GetPlayers()) do
-            if v ~= lp and (v.Name:lower():find(Value:lower()) or v.DisplayName:lower():find(Value:lower())) then
-                orbitTarget = v; Library:Notify("Target Locked: " .. v.DisplayName) break
-            end
-        end
-    end
-})
-OrbitBox:AddToggle("EnableOrbit", { Text = "Start Orbiting (บินวนรอบตัว)", Default = false })
-OrbitBox:AddSlider("OrbitRadius", { Text = "Distance", Default = 10, Min = 5, Max = 30 })
-OrbitBox:AddSlider("OrbitSpeed", { Text = "Speed", Default = 8, Min = 1, Max = 30 })
+-- [[ ⚡ 2. MOVEMENT (วิ่งเร็ว โดดสูง) ]]
+local PhysBox = Tabs.Movement:AddLeftGroupbox("God Movement")
+PhysBox:AddSlider("WalkSpeed", { Text = "WalkSpeed (วิ่งเร็ว)", Default = 32, Min = 16, Max = 300 })
+PhysBox:AddSlider("JumpPower", { Text = "JumpPower (โดดสูง)", Default = 50, Min = 50, Max = 500 })
 
--- [[ 👁️ 3. VISUALS (ESP) ]]
+-- [[ 👁️ 3. VISUALS (มองชื่อ มองเลือด) ]]
 local VisualBox = Tabs.Visuals:AddLeftGroupbox("ESP Settings")
-VisualBox:AddToggle("EspName", { Text = "Show Names (มองชื่อ)", Default = true })
-VisualBox:AddToggle("EspHealth", { Text = "Show Health (มองเลือด)", Default = true })
-
--- [[ ⚙️ 4. MOVEMENT & MISC ]]
-local MiscBox = Tabs.Settings:AddLeftGroupbox("Movement Upgrades")
-MiscBox:AddSlider("WalkSpeed", { Text = "Speed (วิ่งเร็ว)", Default = 32, Min = 16, Max = 300 })
-MiscBox:AddSlider("JumpPower", { Text = "Jump (กระโดดสูง)", Default = 50, Min = 50, Max = 500 })
+VisualBox:AddToggle("ShowEspName", { Text = "Show Name (มองชื่อ)", Default = true })
+VisualBox:AddToggle("ShowEspHealth", { Text = "Show Health (มองเลือด)", Default = true })
 
 -- [[ 🎨 DRAWINGS ]]
-local FovCircle = Drawing.new("Circle"); FovCircle.Filled = false; FovCircle.Color = Color3.new(1,1,1); FovCircle.Thickness = 1
-local TargetLine = Drawing.new("Line"); TargetLine.Thickness = 1; TargetLine.Color = Color3.new(1,1,1)
-local X1 = Drawing.new("Line"); X1.Thickness = 1.5; X1.Color = Color3.new(1,1,1)
-local X2 = Drawing.new("Line"); X2.Thickness = 1.5; X2.Color = Color3.new(1,1,1)
+local FovCircle = Drawing.new("Circle"); FovCircle.Thickness = 1; FovCircle.Color = Color3.new(1,1,1); FovCircle.Filled = false
+local TargetLine = Drawing.new("Line"); TargetLine.Thickness = 1.5; TargetLine.Color = Color3.new(1,1,1)
 
--- [[ 🔍 SCAN TARGET ]]
-local function GetClosest()
-    local target, dist = nil, Library.Options.FOVSize.Value
+-- [[ 🔍 SCAN TARGET (PC STYLE) ]]
+local function GetClosestTarget()
+    local closest, dist = nil, Library.Options.FOVSize.Value
     for _, v in pairs(game.Players:GetPlayers()) do
         if v ~= lp and v.Character and v.Character:FindFirstChild("Head") and v.Character.Humanoid.Health > 0 then
             local pos, vis = cam:WorldToViewportPoint(v.Character.Head.Position)
-            if vis then
-                local m = (Vector2.new(pos.X, pos.Y) - Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)).Magnitude
-                if m < dist then target = v; dist = m end
-            end
+            -- วัดระยะจากเมาส์ (PC Style)
+            local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+            if mag < dist then closest = v; dist = mag end
         end
     end
-    return target
+    return closest
 end
 
--- [[ 🎯 SILENT AIM ]]
+-- [[ 🎯 SILENT AIM HOOK (HEAD) ]]
 local mt = getrawmetatable(game); setreadonly(mt, false); local old = mt.__index
 mt.__index = newcclosure(function(self, idx)
     if not checkcaller() and Library.Toggles.SilentAim.Value and self == mouse and (idx == "Hit" or idx == "Target") then
-        local t = GetClosest()
-        if t then return (idx == "Hit" and t.Character.Head.CFrame or t.Character.Head) end
+        local tar = GetClosestTarget()
+        if tar and tar.Character and tar.Character:FindFirstChild("Head") then
+            return (idx == "Hit" and tar.Character.Head.CFrame or tar.Character.Head)
+        end
     end
     return old(self, idx)
 end)
@@ -105,61 +86,52 @@ setreadonly(mt, true)
 
 -- [[ 🔄 MASTER LOOP ]]
 runService.RenderStepped:Connect(function()
-    local tar = GetClosest()
-    local sAng = os.clock() * Library.Options.SpinSpeed.Value
+    local tar = GetClosestTarget()
     
-    -- Movement
+    -- FOV ติดเมาส์
+    FovCircle.Visible = Library.Toggles.ShowFOV.Value
+    FovCircle.Radius = Library.Options.FOVSize.Value
+    FovCircle.Position = Vector2.new(mouse.X, mouse.Y + 36) -- ปรับ Offset เมาส์
+
+    -- Physics
     if lp.Character and lp.Character:FindFirstChild("Humanoid") then
         lp.Character.Humanoid.WalkSpeed = Library.Options.WalkSpeed.Value
         lp.Character.Humanoid.JumpPower = Library.Options.JumpPower.Value
     end
 
-    -- Orbit (บินจนกว่าจะปิดหรือเปลี่ยนคน)
-    if Library.Toggles.EnableOrbit.Value and orbitTarget and orbitTarget.Character and orbitTarget.Character:FindFirstChild("HumanoidRootPart") then
-        orbitAngle = orbitAngle + math.rad(Library.Options.OrbitSpeed.Value)
-        local offset = Vector3.new(math.cos(orbitAngle) * Library.Options.OrbitRadius.Value, 0, math.sin(orbitAngle) * Library.Options.OrbitRadius.Value)
-        lp.Character.HumanoidRootPart.CFrame = CFrame.new(orbitTarget.Character.HumanoidRootPart.Position + offset, orbitTarget.Character.HumanoidRootPart.Position)
-        lp.Character.HumanoidRootPart.Velocity = Vector3.zero
-    end
-
-    -- Visuals
-    FovCircle.Visible = Library.Toggles.ShowFOV.Value
-    FovCircle.Radius = Library.Options.FOVSize.Value
-    FovCircle.Position = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
-
-    if tar then
+    -- Lines & Lock
+    if tar and tar.Character and tar.Character:FindFirstChild("Head") then
         local p, on = cam:WorldToViewportPoint(tar.Character.Head.Position)
         if on then
-            if Library.Toggles.ShowSpinX.Value then
-                local s = 10; local c, s2 = math.cos(sAng)*s, math.sin(sAng)*s
-                X1.From = Vector2.new(p.X-c, p.Y-s2); X1.To = Vector2.new(p.X+c, p.Y+s2); X1.Visible = true
-                X2.From = Vector2.new(p.X+s2, p.Y-c); X2.To = Vector2.new(p.X-s2, p.Y+c); X2.Visible = true
-            else X1.Visible = false; X2.Visible = false end
-            
             if Library.Toggles.ShowLines.Value then
-                TargetLine.From = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2); TargetLine.To = Vector2.new(p.X, p.Y); TargetLine.Visible = true
+                TargetLine.From = Vector2.new(mouse.X, mouse.Y + 36)
+                TargetLine.To = Vector2.new(p.X, p.Y); TargetLine.Visible = true
             else TargetLine.Visible = false end
+            
+            -- ดึงกล้องเข้าหาหัว
+            cam.CFrame = cam.CFrame:Lerp(CFrame.new(cam.CFrame.p, tar.Character.Head.Position), 1/Library.Options.Smoothness.Value)
         end
-    else X1.Visible = false; X2.Visible = false; TargetLine.Visible = false end
+    else TargetLine.Visible = false end
 end)
 
--- [[ 🧱 FULL ESP (NAME & HEALTH) ]]
-function CreateESP(plr)
+-- [[ 🧱 FORCE ESP (NAME & HEALTH) ]]
+local function ApplyESP(plr)
     local bg = Instance.new("BillboardGui", game.CoreGui)
-    bg.Size = UDim2.new(0, 100, 0, 50); bg.AlwaysOnTop = true
-    local n = Instance.new("TextLabel", bg); n.Size = UDim2.new(1,0,0,20); n.BackgroundTransparency = 1; n.TextColor3 = Color3.new(1,1,1); n.TextStrokeTransparency = 0; n.TextSize = 14
-    local f = Instance.new("Frame", bg); f.Size = UDim2.new(0,40,0,4); f.Position = UDim2.new(0.5,-20,0,25); f.BackgroundColor3 = Color3.new(0,0,0)
-    local b = Instance.new("Frame", f); b.Size = UDim2.new(1,0,1,0); b.BackgroundColor3 = Color3.new(0,1,0); b.BorderSizePixel = 0
+    bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 100, 0, 50)
+    local nl = Instance.new("TextLabel", bg); nl.Size = UDim2.new(1,0,0.4,0); nl.BackgroundTransparency = 1; nl.TextColor3 = Color3.new(1,1,1); nl.TextStrokeTransparency = 0; nl.Position = UDim2.new(0,0,-0.5,0); nl.Font = Enum.Font.SourceSansBold
+    local hf = Instance.new("Frame", bg); hf.Size = UDim2.new(0, 60, 0, 5); hf.Position = UDim2.new(0.2, 0, 0, 0); hf.BackgroundColor3 = Color3.new(0,0,0)
+    local hb = Instance.new("Frame", hf); hb.Size = UDim2.new(1,0,1,0); hb.BackgroundColor3 = Color3.new(0,1,0); hb.BorderSizePixel = 0
+    
     runService.RenderStepped:Connect(function()
-        if plr.Character and plr.Character:FindFirstChild("Humanoid") and (Library.Toggles.EspName.Value or Library.Toggles.EspHealth.Value) then
-            bg.Adornee = plr.Character:FindFirstChild("Head")
-            n.Text = plr.DisplayName; n.Visible = Library.Toggles.EspName.Value
-            local hp = math.clamp(plr.Character.Humanoid.Health/plr.Character.Humanoid.MaxHealth, 0, 1)
-            b.Size = UDim2.new(hp,0,1,0); f.Visible = Library.Toggles.EspHealth.Value; bg.Enabled = true
+        if plr.Character and plr.Character:FindFirstChild("Head") and plr.Character.Humanoid.Health > 0 then
+            bg.Adornee = plr.Character.Head; nl.Text = plr.DisplayName; nl.Visible = Library.Toggles.ShowEspName.Value
+            hf.Visible = Library.Toggles.ShowEspHealth.Value
+            local hp = plr.Character.Humanoid.Health / plr.Character.Humanoid.MaxHealth
+            hb.Size = UDim2.new(hp, 0, 1, 0); hb.BackgroundColor3 = Color3.fromHSV(hp * 0.3, 1, 1); bg.Enabled = true
         else bg.Enabled = false end
     end)
 end
-for _, v in pairs(game.Players:GetPlayers()) do if v ~= lp then CreateESP(v) end end
-game.Players.PlayerAdded:Connect(CreateESP)
+for _, v in pairs(game.Players:GetPlayers()) do if v ~= lp then ApplyESP(v) end end
+game.Players.PlayerAdded:Connect(ApplyESP)
 
-Library:Notify("JULEX FRIEND EDITION LOADED | KEY: BOOK")
+Library:Notify("FRIEND EDITION READY: ล็อคหัวคมๆ สไตล์คอม พร้อมรบ!")
